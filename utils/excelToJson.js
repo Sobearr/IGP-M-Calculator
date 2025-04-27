@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import XLSX from 'xlsx';
 
-const excelToJson = async (filePath, outputJsonPath) => {
+export async function excelToJson(filePath) {
   try {
     // Read the file
     const fileBuffer = await fs.readFile(filePath);
@@ -13,32 +13,25 @@ const excelToJson = async (filePath, outputJsonPath) => {
     // Convert sheet to JSON
     const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-    // extrair colunas importantes
-    // let novo = [];
-    // for (let i = 0; i < jsonData.length; i++) {
-    //   const dados = {
-    //     nome: jsonData[i].Nome,
-    //     vencimento: jsonData[i].Vencimento,
-    //     valor: jsonData[i].Valor,
-    //   };
-    //   novo.push(dados);
-    // }
+    // Normalizar dados
+    const jsonNovo = jsonData.map((entry) => {
+      const entryArr = Object.values(entry);
+      return {
+        nome: String(entryArr[0]),
+        vencimento: String(entryArr[1]),
+        valor: Number(entryArr[2]),
+      };
+    });
 
-    jsonData.forEach((dados) =>
-      Object.keys(dados).forEach((ano) => (dados[ano] = 1 + dados[ano] / 100))
-    );
-
-    // Write JSON data to a file
-    await fs.writeFile(outputJsonPath, JSON.stringify(jsonData, null, 2));
-
-    console.log(`JSON file written to ${outputJsonPath}`);
+    return jsonNovo;
   } catch (error) {
     console.error('Error processing Excel file:', error);
   }
-};
+}
 
 // Example usage
-const inputExcelPath = '../src/data/igp-m.xlsx'; // Change to your Excel file path
-const outputJsonPath = '../src/data/igp-m.json'; // Path where JSON will be saved
+// const inputExcelPath = '../src/data/cobrancas_mock.xlsx'; // Change to your Excel file path
+// const outputJsonPath = '../src/data/cobrancas_mock.json'; // Path where JSON will be saved
 
-excelToJson(inputExcelPath, outputJsonPath);
+// const arquivo = await excelToJson(inputExcelPath, outputJsonPath);
+// console.log(arquivo);
