@@ -16,12 +16,14 @@ import { readFileSync } from 'node:fs';
 import { pegarData } from './src/pegarData.js';
 import { pegaFatoresIGP } from './src/pegaFatoresIGP.js';
 import { ajustaValor } from './src/ajustaValor.js';
-import { salvarValores } from './src/salvarValores.js';
+// import { salvarValores } from './src/salvarValores.js';
 import { jsonToExcel } from './utils/jsonToExcel.js';
+import { excelToJson } from './utils/excelToJson.js';
 import 'dotenv/config';
 import { Option, program } from 'commander';
 import { DateTime } from 'luxon';
 import { exit } from 'node:process';
+import { extname } from 'node:path';
 
 // 0. comando para rodar: node index.js arquivo_excel -flags
 // calcular sem arquivo excel (fornecer valor e data de vencimento) / calculo rapido, gerar arquivo de output,
@@ -58,12 +60,24 @@ if (options.date) {
 
 // 2. carregar arquivo do input (aceitar json e xlsx)
 // 2.1 se for xlsx -> converter para json
-let cobrancasJSON = readFileSync('./src/data/cobrancas_mock.json');
+let cobrancasJSON;
+// let cobrancasJSON = readFileSync('./src/data/cobrancas_mock.json');
 const igpIndicesJSON = readFileSync('./src/data/igp-m.json');
 
 if (options.fileInput) {
+  const extension = extname(options.fileInput);
+  const allowedExtensions = ['.xlsx', '.json'];
+  if (!allowedExtensions.includes(extension)) {
+    throw new Error('Arquivo invalido');
+  }
+
   try {
-    cobrancasJSON = readFileSync(options.fileInput);
+    if (extension === '.xlsx') {
+      cobrancasJSON = await excelToJson(options.fileInput);
+    } else {
+      const arquivoInput = readFileSync(options.fileInput);
+      cobrancasJSON = JSON.parse(arquivoInput);
+    }
   } catch (err) {
     if (err.code === 'ENOENT') {
       console.log('Please ensure the file is in the specified directory');
@@ -72,15 +86,19 @@ if (options.fileInput) {
   }
 }
 
-const cobrancas = JSON.parse(cobrancasJSON);
+// const cobrancas = JSON.parse(cobrancasJSON);
 const igpIndices = JSON.parse(igpIndicesJSON);
 
-// // 3. atualizar valor
-const valoresAjustados = cobrancas.map((cobranca) => {
-  const { nome, vencimento, valor } = cobranca;
+// 3. atualizar valor
+// const valoresAjustados = cobrancasJSON.map((cobranca) => {
+const valoresAjustados = cobrancasJSON.map((cobranca) => {
+  let { nome, vencimento, valor } = cobranca;
 
   if (!nome || !vencimento || !valor) {
-    throw new Error('Insira os dados da cobranca');
+    // throw new Error('Insira os dados da cobranca');
+    nome = '';
+    vencimento = '';
+    valor = 0;
   }
 
   const dataVencimento = pegarData(cobranca);

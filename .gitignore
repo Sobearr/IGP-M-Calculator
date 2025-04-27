@@ -1,3 +1,5 @@
+.prettierrc
 /src/data/cobrancas_mock.json
 /src/data/cobrancas_mock.xlsx
 /src/data/igp-m.xlsx
+/utils/extrairIGPM.js
