@@ -67,11 +67,13 @@ const igpIndicesJSON = readFileSync('./src/data/igp-m.json');
 if (options.fileInput) {
   const extension = extname(options.fileInput);
   const allowedExtensions = ['.xlsx', '.json'];
-  if (!allowedExtensions.includes(extension)) {
-    throw new Error('Arquivo invalido');
-  }
 
   try {
+    if (!allowedExtensions.includes(extension)) {
+      throw new Error(
+        `A extensão ${extension} não é válida. Por favor utilize arquivos .xlsx ou .json.`
+      );
+    }
     if (extension === '.xlsx') {
       cobrancasJSON = await excelToJson(options.fileInput);
     } else {
@@ -80,7 +82,11 @@ if (options.fileInput) {
     }
   } catch (err) {
     if (err.code === 'ENOENT') {
-      console.log('Please ensure the file is in the specified directory');
+      console.log(
+        'Por favor certifique-se de que o caminho do arquivo está correto.'
+      );
+    } else {
+      console.log(err.message);
     }
     exit(1);
   }
@@ -90,7 +96,6 @@ if (options.fileInput) {
 const igpIndices = JSON.parse(igpIndicesJSON);
 
 // 3. atualizar valor
-// const valoresAjustados = cobrancasJSON.map((cobranca) => {
 const valoresAjustados = cobrancasJSON.map((cobranca) => {
   let { nome, vencimento, valor } = cobranca;
 
@@ -102,9 +107,9 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
   }
 
   const dataVencimento = pegarData(cobranca);
-
   const fatores = pegaFatoresIGP(dataVencimento, data, igpIndices);
   const valorAjustado = ajustaValor(fatores, valor, dataVencimento);
+
   return { nome, vencimento, valor, valorAjustado };
 });
 
