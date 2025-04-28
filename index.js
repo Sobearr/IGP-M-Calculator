@@ -16,8 +16,7 @@ import { readFileSync } from 'node:fs';
 import { pegarData } from './src/pegarData.js';
 import { pegaFatoresIGP } from './src/pegaFatoresIGP.js';
 import { ajustaValor } from './src/ajustaValor.js';
-// import { salvarValores } from './src/salvarValores.js';
-import { jsonToExcel } from './utils/jsonToExcel.js';
+import { salvarValores, salvarValoresSemPath } from './src/salvarValores.js';
 import { excelToJson } from './utils/excelToJson.js';
 import 'dotenv/config';
 import { Option, program } from 'commander';
@@ -113,13 +112,14 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
   return { nome, vencimento, valor, valorAjustado };
 });
 
+// Retirar eventualmente
 console.log(valoresAjustados);
 
 if (options.output) {
-  jsonToExcel(valoresAjustados, options.output);
-  console.log(`Resultados escritos em ${options.output}`);
+  salvarValores(valoresAjustados, options.output);
+} else {
+  salvarValoresSemPath(valoresAjustados);
 }
 
-// options.output acima realiza essa funcao
-// const outputExcelPath = './src/results/teste3.xlsx';
-// salvarValores(valoresAjustados);
+console.log(`Resultados salvos em ${options.output || 'ajustes.xlsx'}`);
+exit(0);
