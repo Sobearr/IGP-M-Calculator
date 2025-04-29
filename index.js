@@ -1,17 +1,3 @@
-// OBJETIVO PRINCIPAL: ajuste financeiro de cada valor, baseado na data de vencimento
-// Gerar arquivo excel com: nome, data vencimento, data hoje, valor original, valor atualizado
-
-// TO-DO:
-// Checar por input com dia apos data de calculo
-// --input
-// multa e juros
-// pro-rata
-// arrumar excelToJson
-// arrumar jsonToExcel
-// Remover comentarios
-// Salvar arquivo com os valores atualizados - escolher onde salvar?
-// Implementar CLI
-// Log quando houver erro no reajuste
 import { readFileSync } from 'node:fs';
 import { pegarData } from './src/pegarData.js';
 import { pegaFatoresIGP } from './src/pegaFatoresIGP.js';
@@ -24,10 +10,6 @@ import { DateTime } from 'luxon';
 import { exit } from 'node:process';
 import { extname } from 'node:path';
 
-// 0. comando para rodar: node index.js arquivo_excel -flags
-// calcular sem arquivo excel (fornecer valor e data de vencimento) / calculo rapido, gerar arquivo de output,
-// alterar data final de calculo, juros e multa configuraveis, juros pro-rata,
-// flag caso o arquivo tenha o nome do devedor
 program
   .option(
     '-o, --output <string>',
@@ -61,17 +43,17 @@ if (options.date) {
 let cobrancasJSON;
 const igpIndicesJSON = readFileSync('./src/data/igp-m.json');
 
-const extension = extname(filePath);
+const extensionInput = extname(filePath);
 const allowedExtensions = ['.xlsx', '.json'];
 
 try {
-  if (!allowedExtensions.includes(extension)) {
+  if (!allowedExtensions.includes(extensionInput)) {
     throw new Error(
-      `A extensão ${extension} não é válida. Por favor utilize arquivos .xlsx ou .json.`
+      `A extensão ${extensionInput} não é válida. Por favor utilize arquivos .xlsx ou .json.`
     );
   }
 
-  if (extension === '.xlsx') {
+  if (extensionInput === '.xlsx') {
     cobrancasJSON = await excelToJson(filePath);
   } else {
     const arquivoInput = readFileSync(filePath);
@@ -112,10 +94,11 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
 // console.log(valoresAjustados);
 
 // Checar extensao do arquivo de output (precisar ser .xlsx)
-if (options.output) {
+if (options.output && extname(options.output) === '.xlsx') {
   salvarValores(valoresAjustados, options.output);
 } else {
   salvarValoresSemPath(valoresAjustados);
+  options.output = '';
 }
 
 console.log(`Resultados salvos em ${options.output || 'ajustes.xlsx'}`);
