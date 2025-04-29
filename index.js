@@ -29,24 +29,23 @@ import { extname } from 'node:path';
 // alterar data final de calculo, juros e multa configuraveis, juros pro-rata,
 // flag caso o arquivo tenha o nome do devedor
 program
-  .option('-f, --file-input <string>', 'file with values')
   .option(
     '-o, --output <string>',
     'gera arquivo excel com os valores ajustados'
   )
   .option('-d, --date <string>', 'data de cobranca')
-  .addOption(
-    new Option('-i, --input <string>', 'valor e data').conflicts('fileInput')
-  )
-  .option('-j, --juros <int>', 'porcentagem de juros')
-  .option('-m, --multa <int>', 'porcentagem de multa')
-  .option('-p, --pro-rata', 'especifica se juros sera cobrado pro-rata');
+  .argument('<file name>')
+  .showHelpAfterError();
 
 program.parse();
 const options = program.opts();
+const filePath = program.args[0];
+const hasOneArg = program.args.length === 1;
 
-// sem options -> descricao do programa e instrucoes
-if (Object.keys(options).length === 0) {
+if (!hasOneArg) {
+  console.log(
+    'Erro: Você deve incluir somente o caminho do arquivo com os valores a serem ajustados.'
+  );
   program.help();
 }
 
@@ -60,38 +59,35 @@ if (options.date) {
 // 2. carregar arquivo do input (aceitar json e xlsx)
 // 2.1 se for xlsx -> converter para json
 let cobrancasJSON;
-// let cobrancasJSON = readFileSync('./src/data/cobrancas_mock.json');
 const igpIndicesJSON = readFileSync('./src/data/igp-m.json');
 
-if (options.fileInput) {
-  const extension = extname(options.fileInput);
-  const allowedExtensions = ['.xlsx', '.json'];
+const extension = extname(filePath);
+const allowedExtensions = ['.xlsx', '.json'];
 
-  try {
-    if (!allowedExtensions.includes(extension)) {
-      throw new Error(
-        `A extensão ${extension} não é válida. Por favor utilize arquivos .xlsx ou .json.`
-      );
-    }
-    if (extension === '.xlsx') {
-      cobrancasJSON = await excelToJson(options.fileInput);
-    } else {
-      const arquivoInput = readFileSync(options.fileInput);
-      cobrancasJSON = JSON.parse(arquivoInput);
-    }
-  } catch (err) {
-    if (err.code === 'ENOENT') {
-      console.log(
-        'Por favor certifique-se de que o caminho do arquivo está correto.'
-      );
-    } else {
-      console.log(err.message);
-    }
-    exit(1);
+try {
+  if (!allowedExtensions.includes(extension)) {
+    throw new Error(
+      `A extensão ${extension} não é válida. Por favor utilize arquivos .xlsx ou .json.`
+    );
   }
+
+  if (extension === '.xlsx') {
+    cobrancasJSON = await excelToJson(filePath);
+  } else {
+    const arquivoInput = readFileSync(filePath);
+    cobrancasJSON = JSON.parse(arquivoInput);
+  }
+} catch (err) {
+  if (err.code === 'ENOENT') {
+    console.log(
+      'Por favor certifique-se de que o caminho do arquivo está correto.'
+    );
+  } else {
+    console.log(err.message);
+  }
+  exit(1);
 }
 
-// const cobrancas = JSON.parse(cobrancasJSON);
 const igpIndices = JSON.parse(igpIndicesJSON);
 
 // 3. atualizar valor
@@ -112,9 +108,10 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
   return { nome, vencimento, valor, valorAjustado };
 });
 
-// Retirar eventualmente
-console.log(valoresAjustados);
+// Mostrar na tela de forma organizada
+// console.log(valoresAjustados);
 
+// Checar extensao do arquivo de output (precisar ser .xlsx)
 if (options.output) {
   salvarValores(valoresAjustados, options.output);
 } else {
