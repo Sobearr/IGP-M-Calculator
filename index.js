@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { pegarData } from './src/pegarData.js';
 import { pegaFatoresIGP } from './src/pegaFatoresIGP.js';
 import { ajustaValor } from './src/ajustaValor.js';
-import { salvarValores, salvarValoresSemPath } from './src/salvarValores.js';
+import { salvarValores } from './src/salvarValores.js';
 import { excelToJson } from './utils/excelToJson.js';
 import { ErrorHandler } from './utils/errorHandler.js';
 import { parseDate } from './utils/parseDate.js';
@@ -13,12 +13,8 @@ import { exit } from 'node:process';
 import { extname } from 'node:path';
 
 program
-  .option(
-    '-o, --output <string>',
-    'gera arquivo excel com os valores ajustados'
-  )
+  .option('-o, --output <string>', 'gera arquivo excel no caminho especificado')
   .option('-d, --date <string>', 'data de cobranca')
-  .option('-p, --print', 'exibe o resultado no console')
   .argument('<file name>')
   .showHelpAfterError();
 
@@ -93,20 +89,22 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
   return { nome, vencimento, valor, valorAjustado };
 });
 
-// Mostrar na tela de forma organizada
-if (options.print) {
+if (options.output) {
+  let outputPath = options.output;
+  if (extname(options.output) !== '.xlsx') {
+    const extensionStart = outputPath.lastIndexOf('.');
+
+    outputPath =
+      outputPath.substring(
+        0,
+        extensionStart <= 0 ? outputPath.length : extensionStart
+      ) + '.xlsx';
+  }
+  salvarValores(valoresAjustados, outputPath);
+} else {
   Object.values(valoresAjustados).forEach((entry) =>
     console.log(`${entry.nome} ${entry.vencimento} ${entry.valorAjustado}`)
   );
 }
 
-// Checar extensao do arquivo de output (precisar ser .xlsx)
-if (options.output && extname(options.output) === '.xlsx') {
-  salvarValores(valoresAjustados, options.output);
-} else {
-  salvarValoresSemPath(valoresAjustados);
-  options.output = '';
-}
-
-console.log(`Resultados salvos em ${options.output || 'ajustes.xlsx'}`);
 exit(0);
