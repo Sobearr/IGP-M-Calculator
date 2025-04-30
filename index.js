@@ -18,11 +18,13 @@ program
     'gera arquivo excel com os valores ajustados'
   )
   .option('-d, --date <string>', 'data de cobranca')
+  .option('-p, --print', 'exibe o resultado no console')
   .argument('<file name>')
   .showHelpAfterError();
 
 program.parse();
 const options = program.opts();
+
 const filePath = program.args[0];
 const hasOneArg = program.args.length === 1;
 
@@ -79,7 +81,6 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
   let { nome, vencimento, valor } = cobranca;
 
   if (!nome || !vencimento || !valor) {
-    // throw new Error('Insira os dados da cobranca');
     nome = '';
     vencimento = '';
     valor = 0;
@@ -93,7 +94,11 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
 });
 
 // Mostrar na tela de forma organizada
-// console.log(valoresAjustados);
+if (options.print) {
+  Object.values(valoresAjustados).forEach((entry) =>
+    console.log(`${entry.nome} ${entry.vencimento} ${entry.valorAjustado}`)
+  );
+}
 
 // Checar extensao do arquivo de output (precisar ser .xlsx)
 if (options.output && extname(options.output) === '.xlsx') {
