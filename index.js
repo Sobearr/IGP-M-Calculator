@@ -4,12 +4,13 @@ import { pegaFatoresIGP } from './src/pegaFatoresIGP.js';
 import { ajustaValor } from './src/ajustaValor.js';
 import { salvarValores, salvarValoresSemPath } from './src/salvarValores.js';
 import { excelToJson } from './utils/excelToJson.js';
+import { ErrorHandler } from './utils/errorHandler.js';
+import { parseDate } from './utils/parseDate.js';
 import 'dotenv/config';
-import { Option, program } from 'commander';
+import { program } from 'commander';
 import { DateTime } from 'luxon';
 import { exit } from 'node:process';
 import { extname } from 'node:path';
-import { ErrorHandler } from './utils/errorHandler.js';
 
 program
   .option(
@@ -35,8 +36,12 @@ if (!hasOneArg) {
 // 1. sem flag de data, pegar data hoje
 let data = DateTime.now();
 if (options.date) {
-  const dataInput = DateTime.fromFormat(options.date, 'yyyy-MM-dd');
+  const dataFormatada = parseDate(options.date);
+  const dataInput = DateTime.fromFormat(dataFormatada, 'yyyy-MM-dd');
   data = dataInput.isValid ? dataInput : data;
+  console.log(
+    `Ajustando valores para a data ${data.day}/${data.month}/${data.year}`
+  );
 }
 
 // 2. carregar arquivo do input (aceitar json e xlsx)
