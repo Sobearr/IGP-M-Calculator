@@ -1,5 +1,6 @@
 export function pegaFatoresIGP(vencimento, data, igpIndices) {
   let { ano, mes } = vencimento;
+  ano = Number(ano);
   mes--;
   const anoHoje = data.year;
   let mesHoje = data.month;
@@ -8,8 +9,6 @@ export function pegaFatoresIGP(vencimento, data, igpIndices) {
   let fatores = [];
 
   if (anoHoje === ano && mesHoje === mes) {
-    console.log('anos iguais, meses iguais');
-
     return fatores;
   }
 
