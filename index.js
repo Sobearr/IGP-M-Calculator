@@ -9,6 +9,7 @@ import { Option, program } from 'commander';
 import { DateTime } from 'luxon';
 import { exit } from 'node:process';
 import { extname } from 'node:path';
+import { ErrorHandler } from './utils/errorHandler.js';
 
 program
   .option(
@@ -53,20 +54,16 @@ try {
     );
   }
 
-  if (extensionInput === '.xlsx') {
-    cobrancasJSON = await excelToJson(filePath);
-  } else {
-    const arquivoInput = readFileSync(filePath);
-    cobrancasJSON = JSON.parse(arquivoInput);
-  }
+  const extensionHandlers = {
+    '.xlsx': async (filePath) => await excelToJson(filePath),
+    '.json': (filePath) => JSON.parse(readFileSync(filePath)),
+  };
+
+  cobrancasJSON = await extensionHandlers[extensionInput](filePath);
 } catch (err) {
-  if (err.code === 'ENOENT') {
-    console.log(
-      'Por favor certifique-se de que o caminho do arquivo está correto.'
-    );
-  } else {
-    console.log(err.message);
-  }
+  const erro = new ErrorHandler(err);
+  erro.getMessage();
+
   exit(1);
 }
 
