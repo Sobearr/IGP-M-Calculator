@@ -73,6 +73,7 @@ try {
 const igpIndices = JSON.parse(igpIndicesJSON);
 
 // 3. atualizar valor
+let vazio = false;
 const valoresAjustados = cobrancasJSON.map((cobranca) => {
   let { nome, vencimento, valor } = cobranca;
 
@@ -80,6 +81,7 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
     nome = '';
     vencimento = '';
     valor = 0;
+    vazio = true;
   }
 
   const dataVencimento = pegarData(cobranca);
@@ -88,6 +90,12 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
 
   return { nome, vencimento, valor, valorAjustado };
 });
+
+if (vazio) {
+  console.log(
+    'Fileiras com dados faltantes. O valor dessas fileiras não será ajustado.'
+  );
+}
 
 if (options.output) {
   let outputPath = options.output;
