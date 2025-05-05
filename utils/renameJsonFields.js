@@ -14,15 +14,15 @@ export function renameJsonFields(json) {
     }
   }
 
-  //   if (
-  //     !jsonRenomeado.nome ||
-  //     !jsonRenomeado.vencimento ||
-  //     !jsonRenomeado.valor
-  //   ) {
-  //     throw new Error(
-  //       'Este JSON possui campos inválidos ou não possui os campos necessários.'
-  //     );
-  //   }
+  if (
+    !jsonRenomeado.nome ||
+    !jsonRenomeado.vencimento ||
+    !jsonRenomeado.valor
+  ) {
+    throw new Error(
+      'Este JSON possui campos inválidos ou não possui os campos necessários.'
+    );
+  }
 
   return jsonRenomeado;
 }
