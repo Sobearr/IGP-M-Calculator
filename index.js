@@ -5,7 +5,6 @@ import { ajustaValor } from './src/ajustaValor.js';
 import { salvarValores } from './src/salvarValores.js';
 import { excelToJson } from './utils/excelToJson.js';
 import { ErrorHandler } from './utils/errorHandler.js';
-import { parseDate } from './utils/parseDate.js';
 import 'dotenv/config';
 import { program } from 'commander';
 import { DateTime } from 'luxon';
@@ -23,7 +22,6 @@ program.parse();
 const options = program.opts();
 
 const filePath = program.args[0];
-const hasOneArg = program.args.length === 1;
 
 const dataHoje = DateTime.now();
 // 1. sem flag de data, pegar data hoje
