@@ -1,13 +1,18 @@
+import { DateTime } from 'luxon';
+
 export function ajustaValor(fatores, valor, dataVencimento) {
   // estabelecer mes/ano limite para inicio e fim da tabela (06/1989 - 04/2025) atualizar todo mes quando o indice for publicado
-  const { dia, mes, ano } = dataVencimento;
+  const ano = dataVencimento.year;
+  const mes = dataVencimento.month;
+  const dia = dataVencimento.day;
+  const mesHoje = DateTime.now().month;
   if (
     ano < 1989 ||
     (ano === 1989 && mes < 5) ||
-    (ano === 2025 && mes > 2) ||
+    (ano === 2025 && mes > mesHoje) ||
     ano > 2025
   ) {
-    throw new Error('Data invalida');
+    throw new Error(`Data invalida: ${dia}/${mes}/${ano}`);
   }
 
   if (fatores.length !== 0) {

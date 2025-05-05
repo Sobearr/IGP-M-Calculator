@@ -1,6 +1,6 @@
 export function pegaFatoresIGP(vencimento, data, igpIndices) {
-  let { ano, mes } = vencimento;
-  ano = Number(ano);
+  let ano = vencimento.year;
+  let mes = vencimento.month;
   mes--;
   const anoHoje = data.year;
   let mesHoje = data.month;

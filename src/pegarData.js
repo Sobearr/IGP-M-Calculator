@@ -1,12 +1,8 @@
-export function pegarData(cobranca) {
-  const dmy = cobranca.vencimento.split('/');
-  const dia = dmy[0];
-  const mes = dmy[1];
-  const ano = dmy[2];
+import { DateTime } from 'luxon';
+import { parseDate } from '../utils/parseDate.js';
 
-  return {
-    dia,
-    mes,
-    ano,
-  };
+export function pegarData(dataInput) {
+  const data = parseDate(dataInput);
+  const dataFormatada = DateTime.fromFormat(data, 'yyyy-MM-dd');
+  return dataFormatada;
 }
