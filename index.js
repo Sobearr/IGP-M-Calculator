@@ -11,6 +11,7 @@ import { program } from 'commander';
 import { DateTime } from 'luxon';
 import { exit } from 'node:process';
 import { extname } from 'node:path';
+import { renameJsonFields } from './utils/renameJsonFields.js';
 
 program
   .option('-o, --output <string>', 'gera arquivo excel no caminho especificado')
@@ -24,22 +25,12 @@ const options = program.opts();
 const filePath = program.args[0];
 const hasOneArg = program.args.length === 1;
 
-if (!hasOneArg) {
-  console.log(
-    'Erro: Você deve incluir somente o caminho do arquivo com os valores a serem ajustados.'
-  );
-  program.help();
-}
-
+const dataHoje = DateTime.now();
 // 1. sem flag de data, pegar data hoje
-let data = DateTime.now();
+let data = dataHoje;
 if (options.date) {
-  const dataFormatada = parseDate(options.date);
-  const dataInput = DateTime.fromFormat(dataFormatada, 'yyyy-MM-dd');
-  data = dataInput.isValid ? dataInput : data;
-  console.log(
-    `Ajustando valores para a data ${data.day}/${data.month}/${data.year}`
-  );
+  const dataFormatada = pegarData(options.date);
+  data = dataFormatada.isValid ? dataFormatada : data;
 }
 
 // 2. carregar arquivo do input (aceitar json e xlsx)
@@ -62,40 +53,29 @@ try {
     '.json': (filePath) => JSON.parse(readFileSync(filePath)),
   };
 
-  cobrancasJSON = await extensionHandlers[extensionInput](filePath);
+  const dadosJSON = await extensionHandlers[extensionInput](filePath);
+  cobrancasJSON = dadosJSON.map((dados) => renameJsonFields(dados));
 } catch (err) {
   const erro = new ErrorHandler(err);
   erro.getMessage();
-
   exit(1);
 }
 
 const igpIndices = JSON.parse(igpIndicesJSON);
 
 // 3. atualizar valor
-let vazio = false;
+console.log(
+  `Ajustando valores para a data ${data.day}/${data.month}/${data.year}`
+);
+
 const valoresAjustados = cobrancasJSON.map((cobranca) => {
   let { nome, vencimento, valor } = cobranca;
-
-  if (!nome || !vencimento || !valor) {
-    nome = '';
-    vencimento = '';
-    valor = 0;
-    vazio = true;
-  }
-
-  const dataVencimento = pegarData(cobranca);
+  const dataVencimento = pegarData(vencimento);
   const fatores = pegaFatoresIGP(dataVencimento, data, igpIndices);
   const valorAjustado = ajustaValor(fatores, valor, dataVencimento);
 
   return { nome, vencimento, valor, valorAjustado };
 });
-
-if (vazio) {
-  console.log(
-    'Fileiras com dados faltantes. O valor dessas fileiras não será ajustado.'
-  );
-}
 
 if (options.output) {
   let outputPath = options.output;
