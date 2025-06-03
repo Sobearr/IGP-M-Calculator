@@ -1,7 +1,6 @@
 import { DateTime } from 'luxon';
 
 export function ajustaValor(fatores, valor, dataVencimento) {
-  // estabelecer mes/ano limite para inicio e fim da tabela (06/1989 - 04/2025) atualizar todo mes quando o indice for publicado
   const ano = dataVencimento.year;
   const mes = dataVencimento.month;
   const dia = dataVencimento.day;
@@ -23,15 +22,12 @@ export function ajustaValor(fatores, valor, dataVencimento) {
 
     let reajuste = valor * fatorAcumulado;
 
-    // checar moeda
+    // Checar moeda
     if (ano < 1990 || (ano === 1990 && (mes < 3 || (mes === 3 && dia <= 15)))) {
-      //cruzado novo
       reajuste *= process.env.CRUZADO_NOVO;
     } else if (ano < 1993 || (ano === 1993 && mes < 8)) {
-      // cruzeiro
       reajuste *= process.env.CRUZEIRO;
     } else if (ano < 1994 || (ano === 1994 && mes < 7)) {
-      // cruzeiro real
       reajuste *= process.env.CRUZEIRO_REAL;
     }
 

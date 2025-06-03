@@ -13,7 +13,7 @@ export async function excelToJson(filePath) {
     // Convert sheet to JSON
     const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-    // Normalizar dados
+    // Normalize data
     const jsonNovo = jsonData.map((entry) => {
       const entryArr = Object.values(entry);
       return {
@@ -28,10 +28,3 @@ export async function excelToJson(filePath) {
     console.error('Error processing Excel file:', error);
   }
 }
-
-// Example usage
-// const inputExcelPath = '../src/data/cobrancas_mock.xlsx'; // Change to your Excel file path
-// const outputJsonPath = '../src/data/cobrancas_mock.json'; // Path where JSON will be saved
-
-// const arquivo = await excelToJson(inputExcelPath, outputJsonPath);
-// console.log(arquivo);

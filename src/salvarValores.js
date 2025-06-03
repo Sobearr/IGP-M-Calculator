@@ -8,7 +8,6 @@ export async function salvarValores(valores, outputPath) {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet 1');
 
-    // Write JSON data to a file
     XLSX.writeFile(workbook, outputPath);
     console.log(`Resultados salvos em ${outputPath}`);
   } catch (err) {
