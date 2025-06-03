@@ -20,25 +20,20 @@ program
 
 program.parse();
 const options = program.opts();
-
 const filePath = program.args[0];
 
+// Date handling
 const dataHoje = DateTime.now();
-// 1. sem flag de data, pegar data hoje
 let data = dataHoje;
 if (options.date) {
   const dataFormatada = pegarData(options.date);
   data = dataFormatada.isValid ? dataFormatada : data;
 }
 
-// 2. carregar arquivo do input (aceitar json e xlsx)
-// 2.1 se for xlsx -> converter para json
+// Validate input file's extension
 let cobrancasJSON;
-const igpIndicesJSON = readFileSync('./src/data/igp-m.json');
-
 const extensionInput = extname(filePath);
 const allowedExtensions = ['.xlsx', '.json'];
-
 try {
   if (!allowedExtensions.includes(extensionInput)) {
     throw new Error(
@@ -59,22 +54,30 @@ try {
   exit(1);
 }
 
+// Load igp-m
+const igpIndicesJSON = readFileSync('./src/data/igp-m.json');
 const igpIndices = JSON.parse(igpIndicesJSON);
 
-// 3. atualizar valor
+// Update values
 console.log(
   `Ajustando valores para a data ${data.day}/${data.month}/${data.year}`
 );
 
 const valoresAjustados = cobrancasJSON.map((cobranca) => {
   let { nome, vencimento, valor } = cobranca;
+
   const dataVencimento = pegarData(vencimento);
   const fatores = pegaFatoresIGP(dataVencimento, data, igpIndices);
-  const valorAjustado = ajustaValor(fatores, valor, dataVencimento);
+
+  let valorAjustado = ajustaValor(fatores, valor, dataVencimento);
+
+  const valorInicial = String(valor).replace('.', ',');
+  valorAjustado = valorAjustado.replace('.', ',');
 
   return { nome, vencimento, valor, valorAjustado };
 });
 
+// Handle output file
 if (options.output) {
   let outputPath = options.output;
   if (extname(options.output) !== '.xlsx') {
