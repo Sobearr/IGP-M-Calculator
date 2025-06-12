@@ -6,26 +6,30 @@ import { salvarValores } from './src/salvarValores.js';
 import { excelToJson } from './utils/excelToJson.js';
 import { ErrorHandler } from './utils/errorHandler.js';
 import 'dotenv/config';
-import { program } from 'commander';
+import { program, Option } from 'commander';
 import { DateTime } from 'luxon';
 import { exit } from 'node:process';
 import { extname } from 'node:path';
 import { renameJsonFields } from './utils/renameJsonFields.js';
+import { floatParser } from './utils/floatParser.js';
 
 program
   .option('-o, --output <string>', 'gera arquivo excel no caminho especificado')
   .option('-d, --date <string>', 'data de cobranca')
-  .option('-j, --juros <number>', 'juros', 1)
+  .option('-j, --juros <number>', 'juros ao mês (porcentagem)', floatParser)
   .addOption(
-    new Option('-m, --multa <number>', 'multa integral').conficts(multaProRata)
+    new Option('-p, --juros-pro-rata', 'juros será calculado pró-rata').implies(
+      { juros: 1.0 }
+    )
   )
-  .option('-mp, --multaProRata <number>', 'multa pro-rata', 2)
+  .option('-m, --multa <number>', 'multa (porcentagem)', floatParser)
   .argument('<file name>')
   .showHelpAfterError();
 
 program.parse();
 const options = program.opts();
 const filePath = program.args[0];
+console.log(options);
 
 // Date handling
 const dataHoje = DateTime.now();
@@ -76,10 +80,38 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
 
   let valorAjustado = ajustaValor(fatores, valor, dataVencimento);
 
-  const valorInicial = String(valor).replace('.', ',');
-  valorAjustado = valorAjustado.replace('.', ',');
+  // multa
+  if (options.multa) {
+    let multa = options.multa / 100;
+    console.log(`multa: ${multa}`);
+    valorAjustado *= 1 + multa;
+    console.log(`valor com multa ${valorAjustado}`);
+  }
 
-  return { nome, vencimento, valor, valorAjustado };
+  // juros
+  if (options.juros) {
+    let juros = options.juros / 100;
+    if (options.jurosProRata) {
+      juros /= 30;
+      const difDias = data.diff(dataVencimento, 'days').toObject();
+      const diasAposVencimento = parseInt(difDias.days);
+      juros *= diasAposVencimento;
+      console.log(`juros pro rata: ${juros.toFixed(5)}`);
+    } else {
+      const difMeses = data.diff(dataVencimento, 'months').toObject();
+      const mesesAposVencimento = parseInt(difMeses.months);
+      juros *= mesesAposVencimento;
+      console.log(`juros ao mes: ${juros.toFixed(5)}`);
+    }
+
+    valorAjustado *= 1 + juros;
+  }
+
+  valorAjustado = valorAjustado.toFixed(2);
+  const valorInicial = String(valor).replace('.', ',');
+  valorAjustado = String(valorAjustado).replace('.', ',');
+
+  return { nome, vencimento, valorInicial, valorAjustado };
 });
 
 // Handle output file
