@@ -15,6 +15,11 @@ import { renameJsonFields } from './utils/renameJsonFields.js';
 program
   .option('-o, --output <string>', 'gera arquivo excel no caminho especificado')
   .option('-d, --date <string>', 'data de cobranca')
+  .option('-j, --juros <number>', 'juros', 1)
+  .addOption(
+    new Option('-m, --multa <number>', 'multa integral').conficts(multaProRata)
+  )
+  .option('-mp, --multaProRata <number>', 'multa pro-rata', 2)
   .argument('<file name>')
   .showHelpAfterError();
 
