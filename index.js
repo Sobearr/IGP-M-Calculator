@@ -5,18 +5,24 @@ import { ajustaValor } from './src/ajustaValor.js';
 import { salvarValores } from './src/salvarValores.js';
 import { excelToJson } from './utils/excelToJson.js';
 import { ErrorHandler } from './utils/errorHandler.js';
+import { renameJsonFields } from './utils/renameJsonFields.js';
+import { floatParser } from './utils/floatParser.js';
+import { calculaMulta } from './src/calculaMulta.js';
+import { diffData } from './src/diffData.js';
 import 'dotenv/config';
 import { program, Option } from 'commander';
 import { DateTime } from 'luxon';
 import { exit } from 'node:process';
 import { extname } from 'node:path';
-import { renameJsonFields } from './utils/renameJsonFields.js';
-import { floatParser } from './utils/floatParser.js';
 
 program
   .option('-o, --output <string>', 'gera arquivo excel no caminho especificado')
   .option('-d, --date <string>', 'data de cobranca')
-  .option('-j, --juros <number>', 'juros ao mês (porcentagem)', floatParser)
+  .addOption(
+    new Option('-j, --juros <number>', 'juros ao mes (porcentagem)')
+      .implies({ jurosProRata: false })
+      .argParser(floatParser)
+  )
   .addOption(
     new Option('-p, --juros-pro-rata', 'juros será calculado pró-rata').implies(
       { juros: 1.0 }
@@ -80,31 +86,19 @@ const valoresAjustados = cobrancasJSON.map((cobranca) => {
 
   let valorAjustado = ajustaValor(fatores, valor, dataVencimento);
 
-  // multa
+  // Multa
   if (options.multa) {
-    let multa = options.multa / 100;
-    console.log(`multa: ${multa}`);
-    valorAjustado *= 1 + multa;
-    console.log(`valor com multa ${valorAjustado}`);
+    valorAjustado = calculaMulta(options.multa, valorAjustado);
   }
 
-  // juros
+  // Juros
   if (options.juros) {
-    let juros = options.juros / 100;
-    if (options.jurosProRata) {
-      juros /= 30;
-      const difDias = data.diff(dataVencimento, 'days').toObject();
-      const diasAposVencimento = parseInt(difDias.days);
-      juros *= diasAposVencimento;
-      console.log(`juros pro rata: ${juros.toFixed(5)}`);
-    } else {
-      const difMeses = data.diff(dataVencimento, 'months').toObject();
-      const mesesAposVencimento = parseInt(difMeses.months);
-      juros *= mesesAposVencimento;
-      console.log(`juros ao mes: ${juros.toFixed(5)}`);
-    }
-
-    valorAjustado *= 1 + juros;
+    const proRata = options.jurosProRata;
+    const jurosPercentual = options.juros / 100;
+    const diferencaData = diffData(data, dataVencimento, proRata);
+    const juros = proRata ? jurosPercentual / 30 : jurosPercentual;
+    const jurosTotal = juros * diferencaData;
+    valorAjustado *= 1 + jurosTotal;
   }
 
   valorAjustado = valorAjustado.toFixed(2);
