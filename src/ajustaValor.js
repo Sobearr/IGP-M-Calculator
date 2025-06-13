@@ -1,9 +1,11 @@
+import { converteMoeda } from '../utils/converteMoeda.js';
 import { DateTime } from 'luxon';
 
 export function ajustaValor(fatores, valor, dataVencimento) {
   const ano = dataVencimento.year;
   const mes = dataVencimento.month;
   const dia = dataVencimento.day;
+
   const mesHoje = DateTime.now().month;
   if (
     ano < 1989 ||
@@ -20,18 +22,8 @@ export function ajustaValor(fatores, valor, dataVencimento) {
       1
     );
 
-    let reajuste = valor * fatorAcumulado;
-
-    // Checar moeda
-    if (ano < 1990 || (ano === 1990 && (mes < 3 || (mes === 3 && dia <= 15)))) {
-      reajuste *= process.env.CRUZADO_NOVO;
-    } else if (ano < 1993 || (ano === 1993 && mes < 8)) {
-      reajuste *= process.env.CRUZEIRO;
-    } else if (ano < 1994 || (ano === 1994 && mes < 7)) {
-      reajuste *= process.env.CRUZEIRO_REAL;
-    }
-
-    return reajuste.toFixed(2);
+    let reajuste = valor * fatorAcumulado * converteMoeda(dia, mes, ano);
+    return parseFloat(reajuste.toFixed(2));
   } else {
     return valor.toFixed(2);
   }
